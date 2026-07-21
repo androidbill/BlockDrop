@@ -10,37 +10,158 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* ── HUD (QR + kebab) ───────────────────────────────────── */
+    #hud {
+      position: fixed; top: 8px; right: 8px; z-index: 500;
+      display: flex; gap: 4px; align-items: center;
+    }
+    .kebab {
+      background: rgba(10,20,32,0.75); border: 1px solid #334466;
+      color: #aabbcc; border-radius: 6px; width: 36px; height: 36px;
+      font-size: 18px; cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      transition: background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .kebab:hover, .kebab:active { background: rgba(30,60,90,0.9); color: #fff; }
+    .kebab svg { width: 18px; height: 18px; display: block; }
+
+    /* ── Dropdown menu ──────────────────────────────────────── */
+    #menu-pop {
+      position: fixed; top: 50px; right: 8px; z-index: 600;
+      background: #0d1e30; border: 1px solid #334466;
+      border-radius: 8px; overflow: hidden; min-width: 170px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+      display: none; flex-direction: column;
+    }
+    #menu-pop.open { display: flex; }
+    .menu-item {
+      background: none; border: none; color: #aaccee;
+      font-family: monospace; font-size: 14px;
+      padding: 13px 18px; text-align: left; cursor: pointer;
+      transition: background 0.1s;
+    }
+    .menu-item:hover { background: #1a3a55; color: #fff; }
+    #menu-backdrop {
+      display: none; position: fixed; inset: 0; z-index: 590;
+    }
+    #menu-backdrop.open { display: block; }
+
+    /* ── Modals (About + QR) ────────────────────────────────── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 800;
+      background: rgba(0,0,0,0.7); align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-card {
+      background: #0d1e30; border: 1px solid #334466;
+      border-radius: 14px; padding: 28px 24px;
+      max-width: 320px; width: 90%; text-align: center;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    .modal-icon { width: 72px; height: 72px; border-radius: 16px; }
+    .modal-title { font-family: monospace; font-size: 20px; font-weight: bold; color: #00ffcc; }
+    .modal-by    { font-family: monospace; font-size: 13px; color: #6688aa; }
+    .modal-ver   { font-family: monospace; font-size: 12px; color: #445566; }
+    .modal-close {
+      margin-top: 10px; background: #1a3a55; border: 1px solid #334466;
+      color: #aaccee; font-family: monospace; font-size: 13px;
+      padding: 8px 28px; border-radius: 6px; cursor: pointer;
+    }
+    .modal-close:hover { background: #2a5a80; }
+    #qr-canvas { border-radius: 8px; margin: 8px 0; background: #fff; padding: 8px; }
+    .qr-url { font-family: monospace; font-size: 10px; color: #445566; word-break: break-all; }
+
+    /* ── Update banner ──────────────────────────────────────── */
+    #update-banner {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; z-index: 9999;
+      background: #1a3a1a; border-bottom: 2px solid #00cc44;
+      padding: 10px 16px; align-items: center;
+      justify-content: space-between; gap: 12px;
+      font-family: monospace; font-size: 14px; color: #aaffaa;
+    }
+    #update-banner button {
+      background: #00cc44; color: #000; border: none; border-radius: 4px;
+      padding: 6px 16px; font-family: monospace; font-weight: bold;
+      cursor: pointer; font-size: 13px;
+    }
+    #update-banner .dismiss {
+      background: transparent; color: #66aa66; font-size: 18px; padding: 0 4px;
+    }
+
+    /* ── Install banner ─────────────────────────────────────── */
+    #install-banner {
+      display: none; position: fixed; bottom: 0; left: 0; width: 100%; z-index: 9999;
+      background: #0d2a3a; border-top: 2px solid #00aaff;
+      padding: 10px 16px; align-items: center;
+      justify-content: space-between; gap: 12px;
+      font-family: monospace; font-size: 14px; color: #aaddff;
+    }
+    #install-banner button {
+      background: #00aaff; color: #000; border: none; border-radius: 4px;
+      padding: 6px 16px; font-family: monospace; font-weight: bold;
+      cursor: pointer; font-size: 13px;
+    }
+    #install-banner .dismiss {
+      background: transparent; color: #6699aa; font-size: 18px; padding: 0 4px;
+    }
+  </style>
 </head>
 <body>
 
-  <!-- Update banner (hidden until new SW activates) -->
-  <div id="update-banner" style="display:none; position:fixed; top:0; left:0; width:100%; z-index:9999;
-    background:#1a3a1a; border-bottom:2px solid #00cc44; padding:10px 16px;
-    display:none; align-items:center; justify-content:space-between; gap:12px;
-    font-family:monospace; font-size:14px; color:#aaffaa;">
+  <!-- Update banner -->
+  <div id="update-banner">
     <span>⬆ New version available!</span>
-    <button onclick="window.location.reload()" style="
-      background:#00cc44; color:#000; border:none; border-radius:4px;
-      padding:6px 16px; font-family:monospace; font-weight:bold;
-      cursor:pointer; font-size:13px;">Refresh</button>
-    <button onclick="this.parentElement.style.display='none'" style="
-      background:transparent; color:#66aa66; border:none;
-      font-size:18px; cursor:pointer; padding:0 4px;">✕</button>
+    <button onclick="window.location.reload()">Refresh</button>
+    <button class="dismiss" onclick="this.parentElement.style.display='none'">✕</button>
   </div>
 
-  <!-- Install banner (hidden until beforeinstallprompt fires) -->
-  <div id="install-banner" style="display:none; position:fixed; bottom:0; left:0; width:100%; z-index:9999;
-    background:#0d2a3a; border-top:2px solid #00aaff; padding:10px 16px;
-    align-items:center; justify-content:space-between; gap:12px;
-    font-family:monospace; font-size:14px; color:#aaddff;">
+  <!-- Install banner -->
+  <div id="install-banner">
     <span>📲 Install BlockDrop as an app!</span>
-    <button id="btn-install" style="
-      background:#00aaff; color:#000; border:none; border-radius:4px;
-      padding:6px 16px; font-family:monospace; font-weight:bold;
-      cursor:pointer; font-size:13px;">Install</button>
-    <button onclick="this.parentElement.style.display='none'" style="
-      background:transparent; color:#6699aa; border:none;
-      font-size:18px; cursor:pointer; padding:0 4px;">✕</button>
+    <button id="btn-install">Install</button>
+    <button class="dismiss" onclick="this.parentElement.style.display='none'">✕</button>
+  </div>
+
+  <!-- HUD buttons -->
+  <div id="hud">
+    <button class="kebab" id="btn-qr" aria-label="Show QR code">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13-2h3v3h-3v-3zm-5 0h3v3h-3v-3zm0 5h3v3h-3v-3zm5 0h3v3h-3v-3z"/>
+      </svg>
+    </button>
+    <button class="kebab" id="btn-kebab" aria-label="Menu">⋮</button>
+  </div>
+
+  <!-- Dropdown menu -->
+  <div id="menu-backdrop"></div>
+  <div id="menu-pop">
+    <button class="menu-item" id="mi-refresh">🔄 Refresh</button>
+    <button class="menu-item" id="mi-share">📤 Share</button>
+    <button class="menu-item" id="mi-about">ℹ️ About</button>
+  </div>
+
+  <!-- About modal -->
+  <div class="modal-overlay" id="about-modal">
+    <div class="modal-card">
+      <img src="icon.svg" class="modal-icon" alt="BlockDrop icon">
+      <div class="modal-title">BlockDrop</div>
+      <div class="modal-by">Created by Bill Parsons</div>
+      <div class="modal-ver" id="about-version"></div>
+      <button class="modal-close" id="about-close">Close</button>
+    </div>
+  </div>
+
+  <!-- QR modal -->
+  <div class="modal-overlay" id="qr-modal">
+    <div class="modal-card">
+      <div class="modal-title">Scan to open the app</div>
+      <div id="qr-canvas"></div>
+      <div class="qr-url" id="qr-url"></div>
+      <button class="modal-close" id="qr-close">Close</button>
+    </div>
   </div>
 
   <div id="app">
@@ -55,42 +176,130 @@
     <button class="ctrl-btn" id="btnRight">Push ▶</button>
   </div>
 
+  <script src="qrcode.min.js"></script>
   <script src="levels.js"></script>
   <script src="game.js"></script>
   <script>
-    const APP_VERSION = '2026.07.20.01';
+    const APP_VERSION = '2026.07.20.02';
+    const APP_AUTHOR  = 'Bill Parsons';
 
-    // ── Service Worker + update detection ──────────────────────
+    document.getElementById('about-version').textContent = 'Version ' + APP_VERSION;
+
+    // ── App URL ────────────────────────────────────────────────
+    function appUrl() {
+      // Prefer GitHub Pages URL when deployed there
+      const loc = location.href.split('?')[0].split('#')[0];
+      return loc.endsWith('/') ? loc : loc.replace(/\/[^/]*$/, '/');
+    }
+
+    // ── Hard refresh (nuke SW + caches) ───────────────────────
+    async function hardRefresh() {
+      try {
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.unregister()));
+        }
+        if (window.caches) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+      } catch {}
+      location.reload();
+    }
+
+    // ── Share ──────────────────────────────────────────────────
+    async function shareApp() {
+      const url = appUrl();
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: 'BlockDrop', text: 'Push blocks, match pairs, clear the grid!', url });
+        } else {
+          await navigator.clipboard.writeText(url);
+          // Brief visual feedback — reuse update banner text momentarily
+          const b = document.getElementById('update-banner');
+          const orig = b.querySelector('span').textContent;
+          b.querySelector('span').textContent = '✅ Link copied to clipboard!';
+          b.style.display = 'flex';
+          setTimeout(() => { b.querySelector('span').textContent = orig; b.style.display = 'none'; }, 2000);
+        }
+      } catch {}
+    }
+
+    // ── Kebab menu ─────────────────────────────────────────────
+    const menuPop      = document.getElementById('menu-pop');
+    const menuBackdrop = document.getElementById('menu-backdrop');
+
+    function openMenu()  { menuPop.classList.add('open'); menuBackdrop.classList.add('open'); }
+    function closeMenu() { menuPop.classList.remove('open'); menuBackdrop.classList.remove('open'); }
+
+    document.getElementById('btn-kebab').addEventListener('click', () =>
+      menuPop.classList.contains('open') ? closeMenu() : openMenu()
+    );
+    menuBackdrop.addEventListener('click', closeMenu);
+
+    document.getElementById('mi-refresh').addEventListener('click', () => { closeMenu(); hardRefresh(); });
+    document.getElementById('mi-share').addEventListener('click',   () => { closeMenu(); shareApp(); });
+    document.getElementById('mi-about').addEventListener('click',   () => { closeMenu(); openAbout(); });
+
+    // ── About modal ────────────────────────────────────────────
+    function openAbout()  { document.getElementById('about-modal').classList.add('open'); }
+    function closeAbout() { document.getElementById('about-modal').classList.remove('open'); }
+
+    document.getElementById('about-close').addEventListener('click', closeAbout);
+    document.getElementById('about-modal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeAbout();
+    });
+
+    // ── QR modal ───────────────────────────────────────────────
+    let qrRendered = false;
+
+    function openQr() {
+      const url = appUrl();
+      document.getElementById('qr-url').textContent = url;
+      document.getElementById('qr-modal').classList.add('open');
+      if (!qrRendered && typeof QRCode !== 'undefined') {
+        new QRCode(document.getElementById('qr-canvas'), {
+          text: url, width: 220, height: 220,
+          colorDark: '#000000', colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M,
+        });
+        qrRendered = true;
+      }
+    }
+    function closeQr() { document.getElementById('qr-modal').classList.remove('open'); }
+
+    document.getElementById('btn-qr').addEventListener('click', openQr);
+    document.getElementById('qr-close').addEventListener('click', closeQr);
+    document.getElementById('qr-modal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeQr();
+    });
+
+    // ── Service Worker + update detection ─────────────────────
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js').then(reg => {
-        // Check for updates every time the page gains focus
         document.addEventListener('visibilitychange', () => {
           if (document.visibilityState === 'visible') reg.update();
         });
       }).catch(() => {});
 
-      // Listen for the SW posting a NEW_VERSION message
       navigator.serviceWorker.addEventListener('message', e => {
         if (e.data?.type === 'NEW_VERSION') showUpdateBanner();
       });
 
-      // Also catch the case where a waiting SW exists on first load
       navigator.serviceWorker.ready.then(reg => {
         if (reg.waiting) showUpdateBanner();
         reg.addEventListener('updatefound', () => {
           const newSW = reg.installing;
           newSW.addEventListener('statechange', () => {
-            if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+            if (newSW.state === 'installed' && navigator.serviceWorker.controller)
               showUpdateBanner();
-            }
           });
         });
       });
     }
 
     function showUpdateBanner() {
-      const b = document.getElementById('update-banner');
-      b.style.display = 'flex';
+      document.getElementById('update-banner').style.display = 'flex';
     }
 
     // ── PWA install prompt ─────────────────────────────────────

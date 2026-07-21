@@ -1,6 +1,6 @@
-const VERSION = '2026.07.20.01';
+const VERSION = '2026.07.20.02';
 const CACHE   = `blockdrop-${VERSION}`;
-const FILES   = ['./', './index.html', './style.css', './game.js', './levels.js', './manifest.json', './icon.svg'];
+const FILES   = ['./', './index.html', './style.css', './game.js', './levels.js', './manifest.json', './icon.svg', './qrcode.min.js'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
