@@ -113,7 +113,7 @@
   <script src="levels.js"></script>
   <script src="game.js"></script>
   <script>
-    const APP_VERSION = '2026.07.20.03';
+    const APP_VERSION = '2026.07.20.04';
     const APP_AUTHOR  = 'Bill Parsons';
 
     document.getElementById('about-version').textContent = 'Version ' + APP_VERSION;
@@ -194,6 +194,11 @@
     document.getElementById('qr-modal').addEventListener('click', e => {
       if (e.target === e.currentTarget) closeQr();
     });
+
+    // Lock to portrait orientation
+    if (screen.orientation && screen.orientation.lock) {
+      screen.orientation.lock('portrait').catch(() => {});
+    }
 
     // Service Worker
     if ('serviceWorker' in navigator) {
