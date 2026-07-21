@@ -1,0 +1,65 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  background: #050a10;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  overflow: hidden;
+  font-family: monospace;
+  color: #ccc;
+  user-select: none;
+}
+
+#app {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0;
+  border: 2px solid #223344;
+  box-shadow: 0 0 40px rgba(0,150,255,0.15);
+}
+
+#panel { display: block; flex-shrink: 0; }
+#gc    { display: block; flex-shrink: 0; }
+
+/* Mobile touch controls */
+#controls {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 700px;
+  padding: 8px 16px;
+  gap: 8px;
+}
+
+.ctrl-btn {
+  background: #1a2a3a;
+  border: 2px solid #334466;
+  color: #99bbdd;
+  font-size: 22px;
+  padding: 10px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  flex: 1;
+  text-align: center;
+  transition: background 0.1s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+.ctrl-btn:active { background: #2a4a6a; transform: scale(0.96); }
+
+#btnRetry, #btnMenu {
+  background: #1a1a2a;
+  border-color: #443366;
+  color: #9988cc;
+  font-size: 14px;
+  padding: 10px 14px;
+  flex: 0.6;
+}
+
+/* Responsive scaling */
+@media (max-width: 900px) {
+  #app { transform-origin: top center; }
+}

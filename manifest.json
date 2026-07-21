@@ -1,0 +1,13 @@
+{
+  "name": "BlockDrop",
+  "short_name": "BlockDrop",
+  "description": "Push blocks, match pairs, clear the grid — a BRIX-style puzzle game.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a1520",
+  "theme_color": "#0a1520",
+  "orientation": "landscape",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

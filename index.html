@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>BlockDrop</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg">
+  <meta name="theme-color" content="#0a1520">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <canvas id="panel"></canvas>
+    <canvas id="gc"></canvas>
+  </div>
+
+  <div id="controls">
+    <button class="ctrl-btn" id="btnLeft">◀ Push</button>
+    <button class="ctrl-btn" id="btnRetry">↺ Retry</button>
+    <button class="ctrl-btn" id="btnMenu">☰ Menu</button>
+    <button class="ctrl-btn" id="btnRight">Push ▶</button>
+  </div>
+
+  <script src="levels.js"></script>
+  <script src="game.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+
+    // Scale app to fit viewport
+    function scaleApp() {
+      const app = document.getElementById('app');
+      const aw = app.scrollWidth || 826;
+      const ah = app.scrollHeight || 528;
+      const ctrlH = document.getElementById('controls').offsetHeight || 56;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight - ctrlH - 8;
+      const scale = Math.min(vw / aw, vh / ah, 1);
+      app.style.transform = `scale(${scale})`;
+      app.style.transformOrigin = 'top center';
+    }
+    window.addEventListener('resize', scaleApp);
+    window.addEventListener('load', scaleApp);
+  </script>
+</body>
+</html>
