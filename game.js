@@ -239,12 +239,17 @@ function applyGravity(instant) {
       if (!b) continue;
       const below = r + gravity;
       if (below >= 0 && below < GROWS && !isSolid(below, c)) {
-        // check teleporter
-        const tp = teles.find(t => t.r1 === r && t.c1 === c || t.r2 === r && t.c2 === c);
         bGrid[r][c] = null;
-        bGrid[below][c] = b;
-        b.row = below;
-        b.col = c;
+        const dest = teleDestination(below, c);
+        if (dest && !isSolid(dest.r, dest.c)) {
+          bGrid[dest.r][dest.c] = b;
+          b.row = dest.r;
+          b.col = dest.c;
+        } else {
+          bGrid[below][c] = b;
+          b.row = below;
+          b.col = c;
+        }
         if (!instant) { b.vrow = r; }
         moved = true;
       }
@@ -293,6 +298,13 @@ function checkLaserKill() {
   for (const key of laserBeams) {
     const [r, c] = key.split(',').map(Number);
     if (bGrid[r]?.[c]) return true;
+  }
+  // Killer acid destroys the level when a block touches it.
+  for (let r = 0; r < GROWS; r++) {
+    for (let c = 0; c < GCOLS; c++) {
+      if (tilemap[r][c] !== T_ACID_K) continue;
+      if ([[0,1],[0,-1],[1,0],[-1,0]].some(([dr, dc]) => bGrid[r+dr]?.[c+dc])) return true;
+    }
   }
   return false;
 }
@@ -353,9 +365,11 @@ function stepPhysics() {
   for (let r = 0; r < GROWS; r++) {
     for (let c = 0; c < GCOLS; c++) {
       if (tilemap[r][c] === T_HG && bGrid[r][c]) {
+        const b = bGrid[r][c];
         tilemap[r][c] = T_EMPTY;
         bGrid[r][c] = null;
-        const b = bList.splice(bList.indexOf(bGrid[r][c]), 1);
+        b.alpha = 0;
+        bList.splice(bList.indexOf(b), 1);
         activateHourglass();
         pendingPhysics = true;
         return;
@@ -421,7 +435,12 @@ function flipGravity() {
 }
 
 function onLaserKill() {
-  if (retries > 0) { retries--; retryLevel(); }
+  if (retries > 0) {
+    const remaining = retries - 1;
+    clearInterval(timerID);
+    startLevel(levelIdx);
+    retries = remaining;
+  }
   else { phase = 'lost'; clearInterval(timerID); phaseTimer = 3000; }
 }
 
@@ -467,6 +486,15 @@ function onCanvasClick(e) {
   if (r >= 0 && r < GROWS && c >= 0 && c < GCOLS) { cursor.row = r; cursor.col = c; }
 }
 
+function teleDestination(r, c) {
+  const tp = teles.find(t =>
+    (t.r1 === r && t.c1 === c) || (t.r2 === r && t.c2 === c));
+  if (!tp) return null;
+  return tp.r1 === r && tp.c1 === c
+    ? { r: tp.r2, c: tp.c2 }
+    : { r: tp.r1, c: tp.c1 };
+}
+
 function tryPush(dir) {
   if (phase !== 'idle') return;
   const r = cursor.row, c = cursor.col;
@@ -477,13 +505,18 @@ function tryPush(dir) {
   let nc = c;
   while (true) {
     const next = nc + dir;
-    if (next < 0 || next >= GCOLS || isSolid(r, next)) break;
+    if (next < 0 || next >= GCOLS) break;
+    // A horizontal strike breaks a barrier. The block stops immediately
+    // before it, so the newly opened lane can be used on the next push.
+    if (tilemap[r][next] === T_BARRIER) {
+      tilemap[r][next] = T_EMPTY;
+      buildLaserBeams();
+      break;
+    }
+    if (isSolid(r, next)) break;
     // Teleporter check
-    const tp = teles.find(t =>
-      (t.r1 === r && t.c1 === next) || (t.r2 === r && t.c2 === next));
-    if (tp) {
-      const dest = (t => t.r1 === r && t.c1 === next
-        ? {r: t.r2, c: t.c2} : {r: t.r1, c: t.c1})(tp);
+    const dest = teleDestination(r, next);
+    if (dest && !isSolid(dest.r, dest.c)) {
       nc = dest.c;
       // teleport block
       bGrid[r][c] = null;
