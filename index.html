@@ -12,6 +12,37 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <!-- Update banner (hidden until new SW activates) -->
+  <div id="update-banner" style="display:none; position:fixed; top:0; left:0; width:100%; z-index:9999;
+    background:#1a3a1a; border-bottom:2px solid #00cc44; padding:10px 16px;
+    display:none; align-items:center; justify-content:space-between; gap:12px;
+    font-family:monospace; font-size:14px; color:#aaffaa;">
+    <span>⬆ New version available!</span>
+    <button onclick="window.location.reload()" style="
+      background:#00cc44; color:#000; border:none; border-radius:4px;
+      padding:6px 16px; font-family:monospace; font-weight:bold;
+      cursor:pointer; font-size:13px;">Refresh</button>
+    <button onclick="this.parentElement.style.display='none'" style="
+      background:transparent; color:#66aa66; border:none;
+      font-size:18px; cursor:pointer; padding:0 4px;">✕</button>
+  </div>
+
+  <!-- Install banner (hidden until beforeinstallprompt fires) -->
+  <div id="install-banner" style="display:none; position:fixed; bottom:0; left:0; width:100%; z-index:9999;
+    background:#0d2a3a; border-top:2px solid #00aaff; padding:10px 16px;
+    align-items:center; justify-content:space-between; gap:12px;
+    font-family:monospace; font-size:14px; color:#aaddff;">
+    <span>📲 Install BlockDrop as an app!</span>
+    <button id="btn-install" style="
+      background:#00aaff; color:#000; border:none; border-radius:4px;
+      padding:6px 16px; font-family:monospace; font-weight:bold;
+      cursor:pointer; font-size:13px;">Install</button>
+    <button onclick="this.parentElement.style.display='none'" style="
+      background:transparent; color:#6699aa; border:none;
+      font-size:18px; cursor:pointer; padding:0 4px;">✕</button>
+  </div>
+
   <div id="app">
     <canvas id="panel"></canvas>
     <canvas id="gc"></canvas>
@@ -27,11 +58,65 @@
   <script src="levels.js"></script>
   <script src="game.js"></script>
   <script>
+    const APP_VERSION = '2026.07.20.01';
+
+    // ── Service Worker + update detection ──────────────────────
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
+      navigator.serviceWorker.register('./sw.js').then(reg => {
+        // Check for updates every time the page gains focus
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') reg.update();
+        });
+      }).catch(() => {});
+
+      // Listen for the SW posting a NEW_VERSION message
+      navigator.serviceWorker.addEventListener('message', e => {
+        if (e.data?.type === 'NEW_VERSION') showUpdateBanner();
+      });
+
+      // Also catch the case where a waiting SW exists on first load
+      navigator.serviceWorker.ready.then(reg => {
+        if (reg.waiting) showUpdateBanner();
+        reg.addEventListener('updatefound', () => {
+          const newSW = reg.installing;
+          newSW.addEventListener('statechange', () => {
+            if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+              showUpdateBanner();
+            }
+          });
+        });
+      });
     }
 
-    // Scale app to fit viewport
+    function showUpdateBanner() {
+      const b = document.getElementById('update-banner');
+      b.style.display = 'flex';
+    }
+
+    // ── PWA install prompt ─────────────────────────────────────
+    let deferredInstallPrompt = null;
+
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      document.getElementById('install-banner').style.display = 'flex';
+    });
+
+    document.getElementById('btn-install').addEventListener('click', () => {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      deferredInstallPrompt.userChoice.then(() => {
+        deferredInstallPrompt = null;
+        document.getElementById('install-banner').style.display = 'none';
+      });
+    });
+
+    window.addEventListener('appinstalled', () => {
+      document.getElementById('install-banner').style.display = 'none';
+      deferredInstallPrompt = null;
+    });
+
+    // ── Scale app to fit viewport ──────────────────────────────
     function scaleApp() {
       const app = document.getElementById('app');
       const aw = app.scrollWidth || 826;
