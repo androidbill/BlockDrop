@@ -10,104 +10,6 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="stylesheet" href="style.css">
-  <style>
-    /* ── HUD (QR + kebab) ───────────────────────────────────── */
-    #hud {
-      position: fixed; top: 8px; right: 8px; z-index: 500;
-      display: flex; gap: 4px; align-items: center;
-    }
-    .kebab {
-      background: rgba(10,20,32,0.75); border: 1px solid #334466;
-      color: #aabbcc; border-radius: 6px; width: 36px; height: 36px;
-      font-size: 18px; cursor: pointer; display: flex;
-      align-items: center; justify-content: center;
-      transition: background 0.15s;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .kebab:hover, .kebab:active { background: rgba(30,60,90,0.9); color: #fff; }
-    .kebab svg { width: 18px; height: 18px; display: block; }
-
-    /* ── Dropdown menu ──────────────────────────────────────── */
-    #menu-pop {
-      position: fixed; top: 50px; right: 8px; z-index: 600;
-      background: #0d1e30; border: 1px solid #334466;
-      border-radius: 8px; overflow: hidden; min-width: 170px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.6);
-      display: none; flex-direction: column;
-    }
-    #menu-pop.open { display: flex; }
-    .menu-item {
-      background: none; border: none; color: #aaccee;
-      font-family: monospace; font-size: 14px;
-      padding: 13px 18px; text-align: left; cursor: pointer;
-      transition: background 0.1s;
-    }
-    .menu-item:hover { background: #1a3a55; color: #fff; }
-    #menu-backdrop {
-      display: none; position: fixed; inset: 0; z-index: 590;
-    }
-    #menu-backdrop.open { display: block; }
-
-    /* ── Modals (About + QR) ────────────────────────────────── */
-    .modal-overlay {
-      display: none; position: fixed; inset: 0; z-index: 800;
-      background: rgba(0,0,0,0.7); align-items: center; justify-content: center;
-    }
-    .modal-overlay.open { display: flex; }
-    .modal-card {
-      background: #0d1e30; border: 1px solid #334466;
-      border-radius: 14px; padding: 28px 24px;
-      max-width: 320px; width: 90%; text-align: center;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.7);
-      display: flex; flex-direction: column; align-items: center; gap: 10px;
-    }
-    .modal-icon { width: 72px; height: 72px; border-radius: 16px; }
-    .modal-title { font-family: monospace; font-size: 20px; font-weight: bold; color: #00ffcc; }
-    .modal-by    { font-family: monospace; font-size: 13px; color: #6688aa; }
-    .modal-ver   { font-family: monospace; font-size: 12px; color: #445566; }
-    .modal-close {
-      margin-top: 10px; background: #1a3a55; border: 1px solid #334466;
-      color: #aaccee; font-family: monospace; font-size: 13px;
-      padding: 8px 28px; border-radius: 6px; cursor: pointer;
-    }
-    .modal-close:hover { background: #2a5a80; }
-    #qr-canvas { border-radius: 8px; margin: 8px 0; background: #fff; padding: 8px; }
-    .qr-url { font-family: monospace; font-size: 10px; color: #445566; word-break: break-all; }
-
-    /* ── Update banner ──────────────────────────────────────── */
-    #update-banner {
-      display: none; position: fixed; top: 0; left: 0; width: 100%; z-index: 9999;
-      background: #1a3a1a; border-bottom: 2px solid #00cc44;
-      padding: 10px 16px; align-items: center;
-      justify-content: space-between; gap: 12px;
-      font-family: monospace; font-size: 14px; color: #aaffaa;
-    }
-    #update-banner button {
-      background: #00cc44; color: #000; border: none; border-radius: 4px;
-      padding: 6px 16px; font-family: monospace; font-weight: bold;
-      cursor: pointer; font-size: 13px;
-    }
-    #update-banner .dismiss {
-      background: transparent; color: #66aa66; font-size: 18px; padding: 0 4px;
-    }
-
-    /* ── Install banner ─────────────────────────────────────── */
-    #install-banner {
-      display: none; position: fixed; bottom: 0; left: 0; width: 100%; z-index: 9999;
-      background: #0d2a3a; border-top: 2px solid #00aaff;
-      padding: 10px 16px; align-items: center;
-      justify-content: space-between; gap: 12px;
-      font-family: monospace; font-size: 14px; color: #aaddff;
-    }
-    #install-banner button {
-      background: #00aaff; color: #000; border: none; border-radius: 4px;
-      padding: 6px 16px; font-family: monospace; font-weight: bold;
-      cursor: pointer; font-size: 13px;
-    }
-    #install-banner .dismiss {
-      background: transparent; color: #6699aa; font-size: 18px; padding: 0 4px;
-    }
-  </style>
 </head>
 <body>
 
@@ -123,16 +25,6 @@
     <span>📲 Install BlockDrop as an app!</span>
     <button id="btn-install">Install</button>
     <button class="dismiss" onclick="this.parentElement.style.display='none'">✕</button>
-  </div>
-
-  <!-- HUD buttons -->
-  <div id="hud">
-    <button class="kebab" id="btn-qr" aria-label="Show QR code">
-      <svg viewBox="0 0 24 24" fill="currentColor">
-        <path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13-2h3v3h-3v-3zm-5 0h3v3h-3v-3zm0 5h3v3h-3v-3zm5 0h3v3h-3v-3z"/>
-      </svg>
-    </button>
-    <button class="kebab" id="btn-kebab" aria-label="Menu">⋮</button>
   </div>
 
   <!-- Dropdown menu -->
@@ -164,38 +56,73 @@
     </div>
   </div>
 
+  <!-- Main shell -->
   <div id="shell">
+
+    <!-- Top bar: HUD + controls -->
+    <div id="top-bar">
+      <button class="tb-btn" id="btn-qr" aria-label="QR code">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+          <path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13-2h3v3h-3v-3zm-5 0h3v3h-3v-3zm0 5h3v3h-3v-3zm5 0h3v3h-3v-3z"/>
+        </svg>
+      </button>
+
+      <div class="tb-group">
+        <div class="tb-lbl">SCORE</div>
+        <div class="tb-val" id="h-score">——————</div>
+      </div>
+
+      <div class="tb-group tb-stage-group">
+        <div class="tb-lbl" id="h-stage">BlockDrop</div>
+        <div class="tb-val tb-level-val" id="h-level">—</div>
+      </div>
+
+      <div class="tb-group">
+        <div class="tb-lbl">TIME</div>
+        <div class="tb-val" id="h-time">—'——</div>
+      </div>
+
+      <div class="tb-group tb-small">
+        <div class="tb-lbl">↺</div>
+        <div class="tb-val" id="h-retry">—</div>
+      </div>
+
+      <div class="tb-remaining" id="h-remaining"></div>
+
+      <button class="tb-btn" id="btn-kebab" aria-label="Menu">⋮</button>
+    </div>
+
+    <!-- Game canvas -->
     <div id="app-wrap">
       <div id="app">
-        <canvas id="panel"></canvas>
         <canvas id="gc"></canvas>
       </div>
     </div>
+
+    <!-- Bottom touch controls -->
     <div id="controls">
-      <button class="ctrl-btn" id="btnLeft">◀ Push</button>
-      <button class="ctrl-btn" id="btnRetry">↺ Retry</button>
-      <button class="ctrl-btn" id="btnMenu">☰ Menu</button>
-      <button class="ctrl-btn" id="btnRight">Push ▶</button>
+      <button class="ctrl-btn ctrl-push" id="btnLeft">◀ Push</button>
+      <button class="ctrl-btn ctrl-sec" id="btnRetry">↺</button>
+      <button class="ctrl-btn ctrl-sec" id="btnMenu">☰</button>
+      <button class="ctrl-btn ctrl-push" id="btnRight">Push ▶</button>
     </div>
+
   </div>
 
   <script src="qrcode.min.js"></script>
   <script src="levels.js"></script>
   <script src="game.js"></script>
   <script>
-    const APP_VERSION = '2026.07.20.02';
+    const APP_VERSION = '2026.07.20.03';
     const APP_AUTHOR  = 'Bill Parsons';
 
     document.getElementById('about-version').textContent = 'Version ' + APP_VERSION;
 
-    // ── App URL ────────────────────────────────────────────────
     function appUrl() {
-      // Prefer GitHub Pages URL when deployed there
       const loc = location.href.split('?')[0].split('#')[0];
       return loc.endsWith('/') ? loc : loc.replace(/\/[^/]*$/, '/');
     }
 
-    // ── Hard refresh (nuke SW + caches) ───────────────────────
     async function hardRefresh() {
       try {
         if ('serviceWorker' in navigator) {
@@ -210,7 +137,6 @@
       location.reload();
     }
 
-    // ── Share ──────────────────────────────────────────────────
     async function shareApp() {
       const url = appUrl();
       try {
@@ -218,7 +144,6 @@
           await navigator.share({ title: 'BlockDrop', text: 'Push blocks, match pairs, clear the grid!', url });
         } else {
           await navigator.clipboard.writeText(url);
-          // Brief visual feedback — reuse update banner text momentarily
           const b = document.getElementById('update-banner');
           const orig = b.querySelector('span').textContent;
           b.querySelector('span').textContent = '✅ Link copied to clipboard!';
@@ -228,34 +153,28 @@
       } catch {}
     }
 
-    // ── Kebab menu ─────────────────────────────────────────────
+    // Kebab menu
     const menuPop      = document.getElementById('menu-pop');
     const menuBackdrop = document.getElementById('menu-backdrop');
-
     function openMenu()  { menuPop.classList.add('open'); menuBackdrop.classList.add('open'); }
     function closeMenu() { menuPop.classList.remove('open'); menuBackdrop.classList.remove('open'); }
-
     document.getElementById('btn-kebab').addEventListener('click', () =>
-      menuPop.classList.contains('open') ? closeMenu() : openMenu()
-    );
+      menuPop.classList.contains('open') ? closeMenu() : openMenu());
     menuBackdrop.addEventListener('click', closeMenu);
-
     document.getElementById('mi-refresh').addEventListener('click', () => { closeMenu(); hardRefresh(); });
     document.getElementById('mi-share').addEventListener('click',   () => { closeMenu(); shareApp(); });
     document.getElementById('mi-about').addEventListener('click',   () => { closeMenu(); openAbout(); });
 
-    // ── About modal ────────────────────────────────────────────
+    // About modal
     function openAbout()  { document.getElementById('about-modal').classList.add('open'); }
     function closeAbout() { document.getElementById('about-modal').classList.remove('open'); }
-
     document.getElementById('about-close').addEventListener('click', closeAbout);
     document.getElementById('about-modal').addEventListener('click', e => {
       if (e.target === e.currentTarget) closeAbout();
     });
 
-    // ── QR modal ───────────────────────────────────────────────
+    // QR modal
     let qrRendered = false;
-
     function openQr() {
       const url = appUrl();
       document.getElementById('qr-url').textContent = url;
@@ -270,25 +189,22 @@
       }
     }
     function closeQr() { document.getElementById('qr-modal').classList.remove('open'); }
-
     document.getElementById('btn-qr').addEventListener('click', openQr);
     document.getElementById('qr-close').addEventListener('click', closeQr);
     document.getElementById('qr-modal').addEventListener('click', e => {
       if (e.target === e.currentTarget) closeQr();
     });
 
-    // ── Service Worker + update detection ─────────────────────
+    // Service Worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js').then(reg => {
         document.addEventListener('visibilitychange', () => {
           if (document.visibilityState === 'visible') reg.update();
         });
       }).catch(() => {});
-
       navigator.serviceWorker.addEventListener('message', e => {
         if (e.data?.type === 'NEW_VERSION') showUpdateBanner();
       });
-
       navigator.serviceWorker.ready.then(reg => {
         if (reg.waiting) showUpdateBanner();
         reg.addEventListener('updatefound', () => {
@@ -300,20 +216,17 @@
         });
       });
     }
-
     function showUpdateBanner() {
       document.getElementById('update-banner').style.display = 'flex';
     }
 
-    // ── PWA install prompt ─────────────────────────────────────
+    // PWA install
     let deferredInstallPrompt = null;
-
     window.addEventListener('beforeinstallprompt', e => {
       e.preventDefault();
       deferredInstallPrompt = e;
       document.getElementById('install-banner').style.display = 'flex';
     });
-
     document.getElementById('btn-install').addEventListener('click', () => {
       if (!deferredInstallPrompt) return;
       deferredInstallPrompt.prompt();
@@ -322,35 +235,24 @@
         document.getElementById('install-banner').style.display = 'none';
       });
     });
-
     window.addEventListener('appinstalled', () => {
       document.getElementById('install-banner').style.display = 'none';
       deferredInstallPrompt = null;
     });
 
-    // ── Scale app to fit viewport ──────────────────────────────
-    // Game canvas is fixed at 826 × 528 (GCOLS*CELL + PANEL_W × GROWS*CELL).
-    // CSS transform doesn't affect layout flow, so we also shrink the wrapper
-    // to the visual (scaled) height so the controls stay visible below it.
-    const GAME_W = 826;
-    const GAME_H = 528;
-    const CTRL_H = 56; // approximate controls row height
+    // Scale game canvas to fit the space between top bar and controls
+    const GAME_W = 616; // GCOLS * CELL = 14 * 44
+    const GAME_H = 528; // GROWS * CELL = 12 * 44
 
     function scaleApp() {
-      const app     = document.getElementById('app');
-      const wrap    = document.getElementById('app-wrap');
-      const vw      = window.innerWidth;
-      const vh      = window.innerHeight;
-      const avail_h = vh - CTRL_H - 8;
-      const scale   = Math.min(vw / GAME_W, avail_h / GAME_H, 1);
-
+      const app  = document.getElementById('app');
+      const topH = document.getElementById('top-bar').offsetHeight;
+      const ctrlH = document.getElementById('controls').offsetHeight;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const scale = Math.min(vw / GAME_W, (vh - topH - ctrlH) / GAME_H, 1);
       app.style.transform = `scale(${scale})`;
-      app.style.transformOrigin = 'top center';
-
-      // Shrink wrapper to the visual (post-scale) height so controls sit below
-      const scaledH = GAME_H * scale;
-      wrap.style.height  = scaledH + 'px';
-      wrap.style.width   = Math.min(GAME_W * scale, vw) + 'px';
+      app.style.transformOrigin = 'center center';
     }
     window.addEventListener('resize', scaleApp);
     window.addEventListener('load',   scaleApp);

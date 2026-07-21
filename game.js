@@ -6,7 +6,6 @@
 const CELL   = 44;
 const GCOLS  = 14;
 const GROWS  = 12;
-const PANEL_W = 210;
 
 // Tile types
 const T_EMPTY = 0, T_WALL = 1, T_BARRIER = 2, T_ELEV = 3,
@@ -22,7 +21,7 @@ const FALL_SPEED = 18; // rows per second during fall
 const ELIM_DUR   = 500;
 
 // ── State ─────────────────────────────────────────────────────────────────
-let canvas, ctx, panel, pctx;
+let canvas, ctx;
 let tilemap  = [];
 let bGrid    = [];
 let bList    = [];
@@ -55,13 +54,9 @@ let flashTimer = 0;
 window.addEventListener('DOMContentLoaded', () => {
   canvas = document.getElementById('gc');
   ctx    = canvas.getContext('2d');
-  panel  = document.getElementById('panel');
-  pctx   = panel.getContext('2d');
 
   canvas.width  = GCOLS * CELL;
   canvas.height = GROWS * CELL;
-  panel.width   = PANEL_W;
-  panel.height  = GROWS * CELL;
 
   hiScore = parseInt(localStorage.getItem('bd_hi') || '0');
 
@@ -84,7 +79,7 @@ function gameLoop(ts) {
   lastTS = ts;
   update(dt);
   render();
-  renderPanel();
+  updateHUD();
   requestAnimationFrame(gameLoop);
 }
 
@@ -795,68 +790,35 @@ function drawBlock(ctx, x, y, s, type) {
   }
 }
 
-// ── Panel rendering ────────────────────────────────────────────────────────
-function renderPanel() {
-  const W = PANEL_W, H = panel.height;
-  pctx.fillStyle = '#0a0e18';
-  pctx.fillRect(0, 0, W, H);
-  // Right border
-  pctx.strokeStyle = '#334466';
-  pctx.lineWidth = 2;
-  pctx.strokeRect(1, 1, W-2, H-2);
+// ── HUD update (DOM-based top bar) ────────────────────────────────────────
+const BLOCK_COLORS = ['','#00cc44','#3366ff','#dd00cc','#ffcc00','#ff6600','#aaaacc'];
 
-  if (phase === 'menu') { pctx.fillStyle='#0a0e18'; pctx.fillRect(0,0,W,H); return; }
+function updateHUD() {
+  if (phase === 'menu') return;
   const lvl = LEVELS[levelIdx] || LEVELS[0];
-  const lbl = (text, val, y, col) => {
-    pctx.font = 'bold 13px monospace';
-    pctx.fillStyle = '#6688aa';
-    pctx.fillText(text, 12, y);
-    pctx.font = 'bold 20px monospace';
-    pctx.fillStyle = col || '#ffffff';
-    pctx.fillText(String(val), 12, y+22);
-  };
 
-  lbl('PLAYER 1', score.toString().padStart(6,'0'), 22, '#ffffff');
-  lbl('HI SCORE', hiScore.toString().padStart(6,'0'), 68, '#ffff44');
+  const el = id => document.getElementById(id);
+  const set = (id, v) => { const e = el(id); if (e) e.textContent = v; };
 
-  pctx.fillStyle = '#334466';
-  pctx.fillRect(8, 112, W-16, 1);
+  set('h-score', score.toString().padStart(6,'0'));
+  set('h-hi',    hiScore.toString().padStart(6,'0'));
+  set('h-level', levelIdx + 1);
+  set('h-stage', lvl.name || '');
 
-  lbl('LEVEL', levelIdx+1, 124, '#00ff88');
-  lbl('STAGE', `${lvl.name || ''}`, 168, '#88ccff');
-
-  pctx.fillStyle = '#334466';
-  pctx.fillRect(8, 216, W-16, 1);
-
-  // Time — red when low
-  const tColor = timeLeft <= 10 ? '#ff4444' : '#44ccff';
-  lbl('TIME', `${Math.floor(timeLeft/60)}'${String(timeLeft%60).padStart(2,'0')}`, 228, tColor);
-  lbl('RETRY', retries, 276, '#ffaa44');
-
-  pctx.fillStyle = '#334466';
-  pctx.fillRect(8, 322, W-16, 1);
-
-  // Remaining block counts
-  pctx.font = 'bold 12px monospace';
-  pctx.fillStyle = '#6688aa';
-  pctx.fillText('REMAINING', 12, 342);
+  const t = timeLeft;
+  const timeEl = el('h-time');
+  if (timeEl) {
+    timeEl.textContent = Math.floor(t/60) + "'" + String(t%60).padStart(2,'0');
+    timeEl.style.color = t <= 10 ? '#ff4444' : '';
+  }
+  set('h-retry', retries);
 
   const counts = {};
   bList.forEach(b => { if (b.alpha > 0) counts[b.type] = (counts[b.type]||0)+1; });
-  let iy = 358;
-  for (let t = 1; t <= BTYPE; t++) {
-    if (!counts[t]) continue;
-    drawBlock(pctx, 12, iy, 32, t);
-    pctx.font = 'bold 16px monospace';
-    pctx.fillStyle = '#ffffff';
-    pctx.fillText(`×${counts[t]}`, 52, iy+22);
-    iy += 40;
-    if (iy > H - 30) break;
+  const remEl = el('h-remaining');
+  if (remEl) {
+    remEl.innerHTML = Object.entries(counts).map(([t,n]) =>
+      `<span class="rem-dot" style="background:${BLOCK_COLORS[t]}"></span><span class="rem-n">${n}</span>`
+    ).join('');
   }
-
-  // Controls hint
-  pctx.font = '10px monospace';
-  pctx.fillStyle = '#445566';
-  pctx.fillText('Z/X = push  R = retry', 8, H-18);
-  pctx.fillText('Arrows = move cursor', 8, H-6);
 }
