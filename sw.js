@@ -1,4 +1,4 @@
-const VERSION = '2026.07.20.10';
+const VERSION = '2026.07.20.11';
 const CACHE   = `blockdrop-${VERSION}`;
 const FILES   = ['./', './index.html', './style.css', './game.js', './levels.js', './manifest.json', './icon.svg', './qrcode.min.js'];
 

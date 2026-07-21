@@ -113,7 +113,7 @@
   <script src="levels.js"></script>
   <script src="game.js"></script>
   <script>
-    const APP_VERSION = '2026.07.20.10';
+    const APP_VERSION = '2026.07.20.11';
     const APP_AUTHOR  = 'Bill Parsons';
 
     document.getElementById('about-version').textContent = 'Version ' + APP_VERSION;
@@ -255,12 +255,14 @@
       const topH  = document.getElementById('top-bar').offsetHeight;
       const ctrlH = document.getElementById('controls').offsetHeight;
       const vw    = window.innerWidth;
-      const vh    = window.innerHeight;
-      const scale = Math.min(vw / GAME_W, (vh - topH - ctrlH) / GAME_H);
+      const vh    = window.visualViewport?.height || window.innerHeight;
+      const availableH = Math.max(1, vh - topH - ctrlH);
+      const scale = Math.max(0.1, Math.min(vw / GAME_W, availableH / GAME_H));
       app.style.transform       = `scale(${scale})`;
       app.style.transformOrigin = 'center center';
     }
     window.addEventListener('resize', scaleApp);
+    window.visualViewport?.addEventListener('resize', scaleApp);
     window.addEventListener('load',   scaleApp);
   </script>
 </body>
