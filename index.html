@@ -113,7 +113,7 @@
   <script src="levels.js"></script>
   <script src="game.js"></script>
   <script>
-    const APP_VERSION = '2026.07.20.04';
+    const APP_VERSION = '2026.07.20.06';
     const APP_AUTHOR  = 'Bill Parsons';
 
     document.getElementById('about-version').textContent = 'Version ' + APP_VERSION;
@@ -245,18 +245,19 @@
       deferredInstallPrompt = null;
     });
 
-    // Scale game canvas to fit the space between top bar and controls
-    const GAME_W = 616; // GCOLS * CELL = 14 * 44
-    const GAME_H = 528; // GROWS * CELL = 12 * 44
+    // Game canvas is CELL=36, GCOLS=10, GROWS=18 → 360×648 px native.
+    // Scale up (or down) so it fills the available space on any screen.
+    const GAME_W = 360;
+    const GAME_H = 648;
 
     function scaleApp() {
-      const app  = document.getElementById('app');
-      const topH = document.getElementById('top-bar').offsetHeight;
+      const app   = document.getElementById('app');
+      const topH  = document.getElementById('top-bar').offsetHeight;
       const ctrlH = document.getElementById('controls').offsetHeight;
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      const scale = Math.min(vw / GAME_W, (vh - topH - ctrlH) / GAME_H, 1);
-      app.style.transform = `scale(${scale})`;
+      const vw    = window.innerWidth;
+      const vh    = window.innerHeight;
+      const scale = Math.min(vw / GAME_W, (vh - topH - ctrlH) / GAME_H);
+      app.style.transform       = `scale(${scale})`;
       app.style.transformOrigin = 'center center';
     }
     window.addEventListener('resize', scaleApp);

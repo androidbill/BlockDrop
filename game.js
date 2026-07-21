@@ -3,9 +3,9 @@
 // Controls: Arrow keys = move cursor | Z = push left | X = push right | R = retry | ESC = menu
 
 // ── Constants ─────────────────────────────────────────────────────────────
-const CELL   = 44;
-const GCOLS  = 14;
-const GROWS  = 12;
+const CELL  = 36;
+const GCOLS = 10;
+const GROWS = 18;
 
 // Tile types
 const T_EMPTY = 0, T_WALL = 1, T_BARRIER = 2, T_ELEV = 3,
@@ -138,7 +138,7 @@ function startLevel(idx) {
   retries  = 2;
   hgActive = false;
   hgTimer  = 0;
-  cursor   = { row: 5, col: 2 };
+  cursor   = { row: GROWS - 3, col: Math.floor(GCOLS / 2) };
   elimBlocks = [];
   slideBlock = null;
   pendingPhysics = false;
