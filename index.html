@@ -164,16 +164,19 @@
     </div>
   </div>
 
-  <div id="app">
-    <canvas id="panel"></canvas>
-    <canvas id="gc"></canvas>
-  </div>
-
-  <div id="controls">
-    <button class="ctrl-btn" id="btnLeft">◀ Push</button>
-    <button class="ctrl-btn" id="btnRetry">↺ Retry</button>
-    <button class="ctrl-btn" id="btnMenu">☰ Menu</button>
-    <button class="ctrl-btn" id="btnRight">Push ▶</button>
+  <div id="shell">
+    <div id="app-wrap">
+      <div id="app">
+        <canvas id="panel"></canvas>
+        <canvas id="gc"></canvas>
+      </div>
+    </div>
+    <div id="controls">
+      <button class="ctrl-btn" id="btnLeft">◀ Push</button>
+      <button class="ctrl-btn" id="btnRetry">↺ Retry</button>
+      <button class="ctrl-btn" id="btnMenu">☰ Menu</button>
+      <button class="ctrl-btn" id="btnRight">Push ▶</button>
+    </div>
   </div>
 
   <script src="qrcode.min.js"></script>
@@ -326,19 +329,31 @@
     });
 
     // ── Scale app to fit viewport ──────────────────────────────
+    // Game canvas is fixed at 826 × 528 (GCOLS*CELL + PANEL_W × GROWS*CELL).
+    // CSS transform doesn't affect layout flow, so we also shrink the wrapper
+    // to the visual (scaled) height so the controls stay visible below it.
+    const GAME_W = 826;
+    const GAME_H = 528;
+    const CTRL_H = 56; // approximate controls row height
+
     function scaleApp() {
-      const app = document.getElementById('app');
-      const aw = app.scrollWidth || 826;
-      const ah = app.scrollHeight || 528;
-      const ctrlH = document.getElementById('controls').offsetHeight || 56;
-      const vw = window.innerWidth;
-      const vh = window.innerHeight - ctrlH - 8;
-      const scale = Math.min(vw / aw, vh / ah, 1);
+      const app     = document.getElementById('app');
+      const wrap    = document.getElementById('app-wrap');
+      const vw      = window.innerWidth;
+      const vh      = window.innerHeight;
+      const avail_h = vh - CTRL_H - 8;
+      const scale   = Math.min(vw / GAME_W, avail_h / GAME_H, 1);
+
       app.style.transform = `scale(${scale})`;
       app.style.transformOrigin = 'top center';
+
+      // Shrink wrapper to the visual (post-scale) height so controls sit below
+      const scaledH = GAME_H * scale;
+      wrap.style.height  = scaledH + 'px';
+      wrap.style.width   = Math.min(GAME_W * scale, vw) + 'px';
     }
     window.addEventListener('resize', scaleApp);
-    window.addEventListener('load', scaleApp);
+    window.addEventListener('load',   scaleApp);
   </script>
 </body>
 </html>
