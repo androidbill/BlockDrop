@@ -35,6 +35,8 @@ let retries  = 2;
 let score    = 0;
 let hiScore  = 0;
 let levelIdx = 0;
+let currentLevel = null;
+let unlockedLevel = 0;
 let phase    = 'menu'; // menu|idle|animating|won|lost|levelcomplete
 let phaseTimer = 0;    // general countdown (ms)
 let hgTimer  = 0;
@@ -60,6 +62,8 @@ window.addEventListener('DOMContentLoaded', () => {
   canvas.height = GROWS * CELL;
 
   hiScore = parseInt(localStorage.getItem('bd_hi') || '0');
+  const savedLevel = parseInt(localStorage.getItem('bd_level') || '0');
+  unlockedLevel = Number.isFinite(savedLevel) ? Math.max(0, savedLevel) : 0;
 
   window.addEventListener('keydown', onKey);
   canvas.addEventListener('click',    onCanvasClick);
@@ -130,9 +134,9 @@ function update(dt) {
 
 // ── Level loading ──────────────────────────────────────────────────────────
 function startLevel(idx) {
-  if (idx >= LEVELS.length) { phase = 'won'; phaseTimer = 3000; return; }
   levelIdx = idx;
-  const lvl = LEVELS[idx];
+  const lvl = getLevel(idx);
+  currentLevel = lvl;
   gravity  = 1;
   timeLeft = lvl.timeLimit || 90;
   retries  = 2;
@@ -189,7 +193,7 @@ function tickTimer() {
 function onTimeUp() {
   if (retries > 0) {
     retries--;
-    timeLeft = LEVELS[levelIdx].timeLimit || 90;
+    timeLeft = currentLevel.timeLimit || 90;
     buildLaserBeams();
   } else {
     phase = 'lost';
@@ -449,13 +453,15 @@ function onLevelWon() {
   const bonus = timeLeft * 10;
   score += bonus;
   if (score > hiScore) { hiScore = score; localStorage.setItem('bd_hi', hiScore); }
+  unlockedLevel = Math.max(unlockedLevel, levelIdx + 1);
+  localStorage.setItem('bd_level', unlockedLevel);
   phase = 'levelcomplete';
   phaseTimer = 2500;
 }
 
 // ── Input ──────────────────────────────────────────────────────────────────
 function onKey(e) {
-  if (phase === 'menu') { if (e.code === 'Space' || e.code === 'Enter') startLevel(0); return; }
+  if (phase === 'menu') { if (e.code === 'Space' || e.code === 'Enter') startLevel(unlockedLevel); return; }
   if (phase === 'won' || phase === 'lost') return;
   if (e.code === 'Escape') { goMenu(); return; }
   if (e.code === 'KeyR') { retryLevel(); return; }
@@ -476,7 +482,7 @@ function moveCursor(dr, dc) {
 }
 
 function onCanvasClick(e) {
-  if (phase === 'menu') { startLevel(0); return; }
+  if (phase === 'menu') { startLevel(unlockedLevel); return; }
   if (phase !== 'idle') return;
   const rect = canvas.getBoundingClientRect();
   const x = (e.clientX - rect.left) * (canvas.width  / rect.width);
@@ -562,7 +568,13 @@ function render() {
   ctx.fillStyle = grd;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  if (phase === 'menu') { drawOverlay('BLOCK DROP', 'Press SPACE or Click to Play', '#00ffcc'); return; }
+  if (phase === 'menu') {
+    const action = unlockedLevel > 0
+      ? `Continue at Level ${unlockedLevel + 1}`
+      : 'Press SPACE or Click to Play';
+    drawOverlay('BLOCK DROP', action, '#00ffcc');
+    return;
+  }
 
   // Draw tilemap
   for (let r = 0; r < GROWS; r++) {
@@ -832,7 +844,7 @@ const BLOCK_COLORS = ['','#00cc44','#3366ff','#dd00cc','#ffcc00','#ff6600','#aaa
 
 function updateHUD() {
   if (phase === 'menu') return;
-  const lvl = LEVELS[levelIdx] || LEVELS[0];
+  const lvl = currentLevel || getLevel(levelIdx);
 
   const el = id => document.getElementById(id);
   const set = (id, v) => { const e = el(id); if (e) e.textContent = v; };

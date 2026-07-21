@@ -643,3 +643,67 @@ const LEVELS = [
   ]},
 
 ];
+
+// ── Endless levels ────────────────────────────────────────────────────────
+// Dynamic boards are deterministic: the same level number always produces
+// the same board. Each is a symmetry/color transform of a campaign board
+// whose solution has been validated. These transforms preserve solvability.
+const ENDLESS_BASES = [
+  9, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+  20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+];
+const endlessCache = new Map();
+
+function levelRandom(seed) {
+  let state = seed >>> 0;
+  return () => {
+    state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+}
+
+function getLevel(idx) {
+  if (idx < LEVELS.length) return LEVELS[idx];
+  if (endlessCache.has(idx)) return endlessCache.get(idx);
+
+  const endlessNo = idx - LEVELS.length + 1;
+  const random = levelRandom(0xB10CD00 ^ Math.imul(endlessNo, 2654435761));
+  const sourceIdx = ENDLESS_BASES[Math.floor(random() * ENDLESS_BASES.length)];
+  const source = LEVELS[sourceIdx];
+  const hasHorizontalLaser = source.grid.some(row => row.includes('L'));
+  const mirror = !hasHorizontalLaser && random() < 0.5;
+
+  const colors = [1, 2, 3, 4, 5, 6];
+  for (let i = colors.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [colors[i], colors[j]] = [colors[j], colors[i]];
+  }
+
+  const transformRow = row => {
+    const recolored = row.replace(/[1-6]/g, ch => String(colors[Number(ch) - 1]));
+    return mirror ? [...recolored].reverse().join('') : recolored;
+  };
+  const transformCol = c => mirror ? 9 - c : c;
+  const difficultyBand = Math.floor((endlessNo - 1) / 10);
+
+  const level = {
+    ...source,
+    name: `Endless ${String(endlessNo).padStart(3, '0')} · ${source.name}`,
+    timeLimit: Math.max(45, source.timeLimit - Math.min(30, difficultyBand * 5)),
+    grid: source.grid.map(transformRow),
+  };
+
+  if (source.teleporters) {
+    level.teleporters = source.teleporters.map(t => ({
+      ...t,
+      c1: transformCol(t.c1),
+      c2: transformCol(t.c2),
+    }));
+  }
+  if (source.elevators) {
+    level.elevators = source.elevators.map(e => ({ ...e, col: transformCol(e.col) }));
+  }
+
+  endlessCache.set(idx, level);
+  return level;
+}
