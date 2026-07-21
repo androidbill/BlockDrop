@@ -41,6 +41,7 @@ let hgTimer  = 0;
 let hgActive = false;
 let timerID  = null;
 let pendingPhysics = false;  // physics resolve needed after animation
+let fallTimer  = -1;         // countdown (ms) before post-fall physics check
 let slideBlock = null;       // block currently sliding
 let slideFrom  = 0;          // starting col
 let slideTo    = 0;          // target col
@@ -96,6 +97,9 @@ function update(dt) {
       flashTimer += dt;
       if (flashTimer > 80) { flashOn = !flashOn; flashTimer = 0; }
       if (elimT >= 1) finalizeElim();
+    } else if (fallTimer > 0) {
+      fallTimer -= dt;
+      if (fallTimer <= 0) { fallTimer = -1; pendingPhysics = true; }
     } else if (pendingPhysics) {
       stepPhysics();
     }
@@ -369,7 +373,7 @@ function stepPhysics() {
 }
 
 function startFallAnim() {
-  // visual positions are already behind; they'll interpolate
+  fallTimer = 250; // wait for visual drop before next physics check
   phase = 'animating';
 }
 
